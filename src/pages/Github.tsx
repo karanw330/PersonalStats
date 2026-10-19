@@ -1,17 +1,68 @@
-import { IconArrowUpRight, IconBrandGithub, IconGitPullRequest, IconGitCommit, IconGitBranch, IconUsers } from '@tabler/icons-react';
+import { IconArrowUpRight, IconBrandGithub, IconGitPullRequest, IconCode, IconDatabase, IconExternalLink, IconSparkles } from '@tabler/icons-react';
 import type { DashboardData } from '../types';
-import { ActivitySkyline, ActivityMosaic } from '../components/Visuals';
-import { fmt,statusData } from '../lib/utils';
+import { completed, totalMilestones, statusData } from '../lib/utils';
+
+type ProofLink = { title:string; url:string; repo:string; mergedAt:string };
+
 export function GithubPage({data}:{data:DashboardData}){
- const g=data.github;
- return <div className="bento-grid github-grid">
- <section className="bento-card span-12 github-hero"><div className="card-head"><div className="card-title"><span className="card-icon lavender-icon"><IconBrandGithub size={22}/></span><h2>Contribution garden</h2></div><a href={`https://github.com/${g.username}`} target="_blank" rel="noreferrer" className="pill-link">GitHub profile <IconArrowUpRight size={15}/></a></div>
-  <div className="github-hero-body"><div className="github-count"><span className="overline">LAST 12 MONTHS</span><strong>{fmt(g.contributions)}</strong><small>contributions · {g.contributions===null?'annual count needs GraphQL sync':'includes public and accessible private contribution counts'}</small></div><div className="github-garden"><ActivityMosaic calendar={g.activity} weeks={28}/></div></div><p className="muted-note">Public events alone only cover recent activity; an authorized GraphQL sync gives a fuller contribution calendar.</p></section>
- <section className="bento-card span-4 quick-count"><span className="card-icon mint-icon"><IconGitBranch size={23}/></span><span>PUBLIC REPOSITORIES</span><strong>{fmt(g.publicRepos)}</strong><small>Across your GitHub account</small></section>
- <section className="bento-card span-4 quick-count"><span className="card-icon yellow-icon"><IconGitPullRequest size={23}/></span><span>RECENT MERGED PRs</span><strong>{fmt(g.prs.length)}</strong><small>Up to 20 latest matches</small></section>
- <section className="bento-card span-4 quick-count"><span className="card-icon pink-icon"><IconUsers size={23}/></span><span>FOLLOWERS</span><strong>{fmt(g.followers)}</strong><small>GitHub community</small></section>
- <section className="bento-card span-7"><div className="card-head"><div className="card-title"><span className="card-icon lavender-icon"><IconGitPullRequest size={22}/></span><h2>Pull requests shipped</h2></div></div><div className="pr-list">{g.prs.map((pr,i)=><a className="pr-entry" href={pr.url} rel="noreferrer" target="_blank" key={`${pr.url}-${i}`}><span className="pr-number">{String(i+1).padStart(2,'0')}</span><div><b>{pr.title}</b><small>{pr.repo} · {pr.mergedAt?new Date(pr.mergedAt).toLocaleDateString('en-US',{month:'short',day:'numeric'}):'Merged'}</small></div><IconArrowUpRight size={18}/></a>)}{!g.prs.length&&<div className="empty-chart">No merged PRs returned. A successful GitHub sync will populate this list.</div>}</div></section>
- <section className="bento-card span-5"><div className="card-head"><div className="card-title"><span className="card-icon yellow-icon"><IconGitCommit size={22}/></span><h2>Recent GitHub events</h2></div></div><div className="event-stream">{g.recent.slice(0,9).map((e,i)=><a href={e.url} key={`${e.repo}-${e.date}-${i}`} rel="noreferrer" target="_blank" className="event-entry"><span className="event-dot"/><div><b>{e.type}</b><small>{e.repo}</small></div><time>{e.date?new Date(e.date).toLocaleDateString('en-US',{month:'short',day:'numeric'}):'—'}</time></a>)}{!g.recent.length&&<div className="empty-chart">GitHub activity is waiting for its first sync.</div>}</div></section>
- <section className="bento-card span-12 sync-panel"><b>Data transparency</b><p>GitHub events, merge history and the contribution calendar are different metrics. We keep their sources separate rather than claiming every commit was a meaningful contribution.</p><span>Last successful sync: {statusData(data,'github')}</span></section>
+ const username=data.github.username.toLowerCase();
+ // External merged PRs are more informative than pushes in one's own repositories.
+ // The collector returns only the latest 20 matched PRs, so don't present this as a lifetime total.
+ const external:ProofLink[]=data.github.prs.filter(pr=>{
+  const [owner]=pr.repo.split('/');
+  return owner?.toLowerCase()!==username && /^https:\/\/github\.com\//.test(pr.url);
+ });
+ const groups=Array.from(new Set(external.map(pr=>pr.repo)));
+ const finished=completed(data.phases),total=totalMilestones(data.phases);
+ const next=data.phases.flatMap(p=>p.milestones.map(m=>({...m,phase:p.title}))).find(m=>!m.done);
+
+ return <div className="bento-grid github-grid impact-grid">
+  <section className="bento-card span-12 impact-hero">
+   <div className="impact-hero-copy"><span className="overline">ENGINEERING WORK / EVIDENCE FIRST</span>
+    <h2>Things I've built.<br/><em>Things I can explain.</em></h2>
+    <p>A shortlist of projects and real contributions worth discussing. No vanity metrics, raw event feed or automatically generated achievement claims.</p>
+   </div>
+   <a className="pill-link" href={`https://github.com/${data.github.username}`} target="_blank" rel="noreferrer">GitHub profile <IconArrowUpRight size={17}/></a>
+  </section>
+
+  <section className="bento-card span-12">
+   <div className="card-head"><div className="card-title"><span className="card-icon lavender-icon"><IconCode size={22}/></span><h2>Featured engineering projects</h2></div><span className="little-pill">SOURCE-LINKED</span></div>
+   <div className="impact-projects">
+    <div className="impact-project impact-purple">
+     <span className="overline">01 / EVENT-DRIVEN BACKEND</span>
+     <h3>AWS-style Billing Pipeline</h3>
+     <p>Usage ingestion, billing logic and a phased roadmap for idempotency, persistence and reconciliation.</p>
+     <div className="impact-status"><strong>{finished} / {total}</strong><span>milestones currently checked</span></div>
+     <div className="impact-progress" aria-label={`${finished} of ${total} milestones completed`}><span style={{width:`${total?Math.round(finished/total*100):0}%`}}/></div>
+     {next&&<small className="impact-next">Next unchecked: {next.title}</small>}
+     <a className="impact-link" href="https://github.com/karanw330/AWS-Billing" target="_blank" rel="noreferrer">View code <IconArrowUpRight size={16}/></a>
+    </div>
+    <div className="impact-project impact-mint">
+     <span className="overline">02 / BACKEND APPLICATION</span>
+     <h3>CrypSim</h3>
+     <p>Crypto trading simulator built with Python, FastAPI and WebSockets. Explore the implementation and architectural choices.</p>
+     <div className="impact-proof"><IconDatabase size={18}/><span>Repository and code are the evidence. No unverified throughput claims.</span></div>
+     <a className="impact-link" href="https://github.com/karanw330/CrypSim" target="_blank" rel="noreferrer">View code <IconArrowUpRight size={16}/></a>
+    </div>
+   </div>
+  </section>
+
+  <section className="bento-card span-12">
+   <div className="card-head"><div className="card-title"><span className="card-icon yellow-icon"><IconGitPullRequest size={22}/></span><h2>Open-source contributions</h2></div><span className="little-pill">EXTERNAL REPOSITORIES</span></div>
+   <p className="muted-note">Merged pull requests to repositories outside your own account. Use the linked changes as interview evidence, not just a PR count.</p>
+   {external.length?
+    <div className="impact-contributions">{groups.map(repo=><div className="impact-repo" key={repo}>
+      <div className="impact-repo-head"><IconBrandGithub size={17}/><strong>{repo}</strong><span>{external.filter(p=>p.repo===repo).length} shown</span></div>
+      {external.filter(p=>p.repo===repo).slice(0,5).map(pr=><a className="impact-pr" href={pr.url} target="_blank" rel="noreferrer" key={pr.url}>
+       <span>{pr.title}</span><small>{pr.mergedAt?new Date(pr.mergedAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}):'Merged'}</small><IconExternalLink size={16}/>
+      </a>)}
+     </div>)}</div>
+   :<div className="impact-empty"><IconSparkles size={22}/><div><strong>No external merged PRs in the current snapshot</strong><p>The GitHub collector loads up to 20 recent matches. Older contributions might not be included; your GitHub profile remains the full source.</p></div></div>}
+  </section>
+  <section className="bento-card span-12 impact-source-note">
+   <strong>Evidence, not estimates.</strong>
+   <p>Project links lead to the source code. Milestone status reflects your editable local project checklist, not a verified deployment. The external PR list comes from the latest GitHub sync and is not a complete historical archive.</p>
+   <span>GitHub sync: {statusData(data,'github')}</span>
+  </section>
  </div>;
 }
