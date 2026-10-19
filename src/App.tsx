@@ -5,6 +5,7 @@ import { IconArrowRight, IconBolt, IconBriefcase, IconBrandGithub, IconChartDots
 import { motion, AnimatePresence } from 'motion/react';
 import type { DashboardData, NavPage } from './types';
 import { loadDashboard } from './lib/crypto';
+import { eraseLegacyResumeStorage } from './lib/legacy-resume-cleanup';
 import { loadLocalChanges, saveLocalChanges, exportChanges, importChanges, type LocalChanges } from './lib/preferences';
 import { prettyDate } from './lib/utils';
 import { Overview } from './pages/Overview';
@@ -29,6 +30,15 @@ export default function App(){
  const [command,setCommand]=useState(false);const [query,setQuery]=useState('');const [settings,setSettings]=useState(false);
  const [importing,setImporting]=useState(false);const inputRef=useRef<HTMLInputElement|null>(null);
  const lastActivity=useRef(Date.now());
+ // Delete only the retired Resume Hub database; keep all current workspace preferences.
+ useEffect(() => {
+  void eraseLegacyResumeStorage().then(result => {
+   if(result==='blocked' || result==='error'){
+    notifications.show({color:'orange',title:'Old resume cleanup incomplete',message:'Close other DevPulse tabs and reload to retry deleting old resume data.'});
+   }
+  });
+ }, []);
+
  const navigate=(v:NavPage)=>{setPage(v);location.hash=v;setCommand(false)};
  const lock=()=>{setData(null);setChanges(null);setPassword('');setEntered('');setPage('overview');setSettings(false);location.hash='';};
  useEffect(()=>{const h=()=>setPage(resolveHash());window.addEventListener('hashchange',h);return()=>window.removeEventListener('hashchange',h)},[]);
