@@ -1,0 +1,51 @@
+name: Refresh and deploy DevPulse
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 3 * * *'
+  push:
+    branches: [main]
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: github-pages
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install
+        run: npm install --no-audit --no-fund
+      - name: Restore encrypted history
+        uses: actions/cache/restore@v4
+        with:
+          path: private/last-good.enc.json
+          key: devpulse-history-${{ github.run_id }}
+          restore-keys: devpulse-history-
+      - name: Collect and encrypt
+        env:
+          DEVPULSE_PASSPHRASE: ${{ secrets.DEVPULSE_PASSPHRASE }}
+          GH_API_TOKEN: ${{ secrets.GH_API_TOKEN || github.token }}
+          GITHUB_USERNAME: karanw330
+          LEETCODE_USERNAME: pUH5KueiJ3
+          CODEFORCES_HANDLE: karanw330
+        run: npm run sync
+      - name: Save encrypted history
+        uses: actions/cache/save@v4
+        with:
+          path: private/last-good.enc.json
+          key: devpulse-history-${{ github.run_id }}
+      - name: Build static site
+        run: npm run build
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - uses: actions/deploy-pages@v4

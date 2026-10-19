@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import { seal, unseal } from './vault.mjs';
+const pass='random-long-test-passphrase-not-for-use';
+const input={hello:'world',number:42,arr:[1,2,3]};
+const ciphertext=seal(input,pass);
+assert.deepEqual(unseal(ciphertext,pass),input);
+assert.throws(()=>unseal(ciphertext,pass+'no'));
+assert.notEqual(seal(input,pass).ciphertext,ciphertext.ciphertext);
+assert(!JSON.stringify(ciphertext).includes('world'));
+console.log('AES-GCM/PBKDF2 round-trip, wrong-key rejection, randomized ciphertext: PASS');
