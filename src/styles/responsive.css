@@ -4,7 +4,7 @@
 /* Shared containment: long titles and third-party controls must not widen a grid. */
 #root, .app-stage, .app-shell, .main-content, .bento-grid,
 .bento-grid > *, .card-head, .card-title, .page-intro > *,
-.mission-summary-text, .intro-right, .resume-file, .phase-description {
+.mission-summary-text, .intro-right, .phase-description {
   min-width: 0;
 }
 .bento-grid > *, .summary-strip > * { max-width: 100%; }
@@ -179,9 +179,6 @@
   .phase-description small { font-size: 9px; line-height: 1.4; }
   .phase-right { flex: 0 0 auto; }
   .phase-arrow { flex: 0 0 auto; }
-  .resume-drop { min-height: 200px; }
-  .document-frame { height: clamp(360px, 110vw, 530px); }
-  .document-placeholder { padding-inline: 12px; text-align: center; }
   .report-hero { padding: 25px; min-height: 240px; }
   .report-hero h2 { font-size: clamp(30px, 8vw, 39px); }
   .recap-stat { min-height: 142px; }
