@@ -109,7 +109,7 @@ public/data/
 ## Known limitations
 
 - Milestone completion can be edited in the browser but does not sync across devices without manual encrypted backup transfer.
-- PDF uploads and resume storage are intentionally not part of DevPulse.
+- The retired Resume Hub's encrypted IndexedDB database (`devpulse-resume-v1`) is deleted automatically when the updated site next loads in each browser profile. The deletion does not touch milestone overrides, other local settings, or files stored elsewhere. If an old DevPulse tab blocks deletion, close other tabs and reload. Browsers that never open the updated site will retain their old local data until manually cleared.
 - This is static-site encryption, not enterprise authentication or zero-trust identity management.
 - The current GitHub data model deliberately counts activity and PRs, **not GitHub code submissions as a ranked contest platform does**.
 - API responses can change, or external services can rate-limit scheduled requests. Sync errors are visible through freshness indicators, and source normalizers may need updates.
