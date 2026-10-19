@@ -1,4 +1,5 @@
 import React, { useId, useMemo } from 'react';
+import { motion, useReducedMotion } from 'motion/react';
 import type { Phase } from '../types';
 import { fmt } from '../lib/utils';
 
@@ -13,11 +14,12 @@ export function ActivitySkyline({calendar,days=35,className=''}:ActivityProps){
  </div>;
 }
 export function GoalOrbit({value,target,accent='var(--lavender)',size=150}:{value:number|null;target:number;accent?:string;size?:number}){
+ const reduceMotion=useReducedMotion();
  const pct=value!==null&&target>0?Math.min(100,Math.round(value/target*100)):0;const dash=(pct/100)*302;
  return <div className="goal-orbit" style={{width:size,height:size}}>
   <svg viewBox="0 0 120 120" role="img" aria-label={value===null?'Goal progress unavailable':`${pct} percent of goal complete`}>
    <circle cx="60" cy="60" r="48" stroke="var(--orbit-track)" strokeWidth="11" fill="none"/>
-   <circle cx="60" cy="60" r="48" stroke={accent} strokeWidth="11" strokeLinecap="round" strokeDasharray={`${dash} 302`} fill="none" transform="rotate(-90 60 60)"/>
+   <motion.circle cx="60" cy="60" r="48" stroke={accent} strokeWidth="11" strokeLinecap="round" initial={reduceMotion?false:{strokeDasharray:"0 302"}} animate={{strokeDasharray:`${dash} 302`}} transition={{duration:reduceMotion?0:1.05,ease:[0.22,1,0.36,1]}} fill="none" transform="rotate(-90 60 60)"/>
    <circle cx="60" cy="60" r="35" fill="none" stroke="var(--outline)" strokeDasharray="2 5"/>
   </svg>
   <div className="orbit-text"><strong>{value===null?'—':`${pct}%`}</strong><small>OF TARGET</small></div>
