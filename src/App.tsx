@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActionIcon, Button, TextInput, PasswordInput, useMantineColorScheme, Tooltip, Menu, Modal, Badge } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconArrowRight, IconBolt, IconBriefcase, IconBrandGithub, IconChartDots3, IconCode, IconLayoutDashboard, IconLock, IconLockOpen, IconMoon, IconRefresh, IconSearch, IconSettings, IconSun, IconTimeline, IconChartBar, IconDownload, IconUpload, IconShieldLock, IconX } from '@tabler/icons-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import type { DashboardData, NavPage } from './types';
 import { loadDashboard } from './lib/crypto';
 import { eraseLegacyResumeStorage } from './lib/legacy-resume-cleanup';
@@ -23,6 +23,7 @@ const IDLE_MS=15*60_000;
 const resolveHash=():NavPage=>{const h=location.hash.replace('#','');return NAV.find(n=>n.id===h)?.id||'overview'};
 export default function App(){
  const {colorScheme,setColorScheme}=useMantineColorScheme();
+ const reduceMotion=useReducedMotion();
  const [page,setPage]=useState<NavPage>(resolveHash);
  const [password,setPassword]=useState('');const [entered,setEntered]=useState('');
  const [data,setData]=useState<DashboardData|null>(null);const [changes,setChanges]=useState<LocalChanges|null>(null);
@@ -66,15 +67,15 @@ export default function App(){
  const current= NAV.find(n=>n.id===page);
  return <div className="app-stage"><div className="app-shell">
   <header className="topbar"><div className="brand" onClick={()=>navigate('overview')} role="button" tabIndex={0} onKeyDown={e=>e.key==='Enter'&&navigate('overview')}><span className="brand-mark"><IconBolt size={23}/></span><span className="brand-name">devpulse<span>.</span></span></div>
-   <nav className="nav-pills" aria-label="Main navigation">{NAV.map(({id,label,Icon})=><button type="button" key={id} className={`nav-pill ${page===id?'active':''}`} onClick={()=>navigate(id)}><Icon size={17} stroke={1.75}/><span>{label}</span></button>)}</nav>
+   <nav className="nav-pills" aria-label="Main navigation">{NAV.map(({id,label,Icon})=><button type="button" key={id} className={`nav-pill ${page===id?'active':''}`} onClick={()=>navigate(id)} aria-current={page===id?'page':undefined}>{page===id&&<motion.span layoutId="active-nav-pill" className="nav-pill-background" transition={reduceMotion?{duration:0}:{type:'spring',stiffness:420,damping:37}}/>}<Icon size={17} stroke={1.75}/><span>{label}</span></button>)}</nav>
    <div className="top-actions"><Tooltip label="Search (Ctrl+K)"><ActionIcon variant="subtle" size={39} radius="xl" color="dark" onClick={()=>setCommand(true)} aria-label="Search"><IconSearch size={19}/></ActionIcon></Tooltip>
     <button className="theme-toggle" onClick={()=>setColorScheme(colorScheme==='dark'?'light':'dark')} title="Toggle theme">{colorScheme==='dark'?<IconSun size={20}/>:<IconMoon size={20}/>}</button>
     <Menu shadow="md" position="bottom-end"><Menu.Target><button className="avatar-menu" title="Workspace options">K</button></Menu.Target><Menu.Dropdown><Menu.Item leftSection={<IconSettings size={16}/>} onClick={configButton}>Settings & backup</Menu.Item><Menu.Item leftSection={<IconLock size={16}/>} color="red" onClick={lock}>Lock workspace</Menu.Item></Menu.Dropdown></Menu>
    </div>
   </header>
-  <main className="main-content"><div className="page-intro"><div><span className="intro-kicker">YOUR ENGINEERING WORKSPACE <span className="intro-star">✳</span> {page.toUpperCase()}</span><h1>{({overview:'Build. Learn. Repeat.',coding:'Solve the next one.',github:'Proof of work.',projects:'In the making.',review:'The bigger picture.'} as Record<NavPage,string>)[page]}</h1><p>{({overview:'A little progress, every single day. It all adds up.',coding:'LeetCode, Codeforces and the problems worth revisiting.',github:'Project evidence, source links and meaningful open-source work.',projects:'Every milestone of the AWS Billing pipeline, tracked.',review:'Look beyond today. Measure the weeks that matter.'} as Record<NavPage,string>)[page]}</p></div>
-   <div className="intro-right"><span className="last-sync"><span className="status-dot"/> Snapshot {prettyDate(view.updatedAt)}</span><Button variant="filled" color="dark" radius="xl" className="quick-btn" leftSection={<IconBolt size={17}/>} onClick={()=>navigate('projects')}>View milestones</Button></div></div>
-  <AnimatePresence mode="wait"><motion.div key={page} initial={{opacity:0,y:9}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-7}} transition={{duration:.18}}>
+  <main className="main-content"><motion.div key={`intro-${page}`} className="page-intro" initial={reduceMotion?false:{opacity:0,y:8}} animate={{opacity:1,y:0}} transition={{duration:reduceMotion?0:.28,ease:'easeOut'}}><div><span className="intro-kicker">YOUR ENGINEERING WORKSPACE <span className="intro-star">✳</span> {page.toUpperCase()}</span><h1>{({overview:'Build. Learn. Repeat.',coding:'Solve the next one.',github:'Proof of work.',projects:'In the making.',review:'The bigger picture.'} as Record<NavPage,string>)[page]}</h1><p>{({overview:'A little progress, every single day. It all adds up.',coding:'LeetCode, Codeforces and the problems worth revisiting.',github:'Project evidence, source links and meaningful open-source work.',projects:'Every milestone of the AWS Billing pipeline, tracked.',review:'Look beyond today. Measure the weeks that matter.'} as Record<NavPage,string>)[page]}</p></div>
+   <div className="intro-right"><span className="last-sync"><span className="status-dot"/> Snapshot {prettyDate(view.updatedAt)}</span><Button variant="filled" color="dark" radius="xl" className="quick-btn" leftSection={<IconBolt size={17}/>} onClick={()=>navigate('projects')}>View milestones</Button></div></motion.div>
+  <AnimatePresence mode="wait"><motion.div key={page} initial={reduceMotion?false:{opacity:0,y:12}} animate={{opacity:1,y:0}} exit={reduceMotion?{opacity:1,y:0}:{opacity:0,y:-6}} transition={{duration:reduceMotion?0:.26,ease:'easeOut'}}>
    {page==='overview'&&<Overview data={view} navigate={navigate}/>}
    {page==='coding'&&<Coding data={view} changes={changes!} update={updateChanges}/>}
    {page==='github'&&<GithubPage data={view}/>}
