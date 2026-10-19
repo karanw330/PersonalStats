@@ -1,9 +1,10 @@
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// GitHub Pages project URL: /PersonalStats/.
-// Override with VITE_BASE=/ for a custom domain or root Pages site.
-export default defineConfig({
-  plugins: [react()],
-  base: process.env.VITE_BASE || '/PersonalStats/',
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, '.', 'VITE_');
+  return {
+    plugins: [react()],
+    base: env.VITE_BASE || '/PersonalStats/',
+  };
 });
