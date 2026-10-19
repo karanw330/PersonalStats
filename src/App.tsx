@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActionIcon, Button, TextInput, PasswordInput, useMantineColorScheme, Tooltip, Menu, Modal, Badge } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { IconArrowRight, IconBolt, IconBrandGithub, IconChartDots3, IconCode, IconFileCv, IconLayoutDashboard, IconLock, IconLockOpen, IconMoon, IconRefresh, IconSearch, IconSettings, IconSun, IconTimeline, IconChartBar, IconDownload, IconUpload, IconShieldLock, IconX } from '@tabler/icons-react';
+import { IconArrowRight, IconBolt, IconBriefcase, IconBrandGithub, IconChartDots3, IconCode, IconFileCv, IconLayoutDashboard, IconLock, IconLockOpen, IconMoon, IconRefresh, IconSearch, IconSettings, IconSun, IconTimeline, IconChartBar, IconDownload, IconUpload, IconShieldLock, IconX } from '@tabler/icons-react';
 import { motion, AnimatePresence } from 'motion/react';
 import type { DashboardData, NavPage } from './types';
 import { loadDashboard } from './lib/crypto';
@@ -16,7 +16,7 @@ import { Review } from './pages/Review';
 
 const NAV: {id:NavPage;label:string;Icon:typeof IconBolt}[]=[
  {id:'overview',label:'Dashboard',Icon:IconLayoutDashboard},{id:'coding',label:'Progress',Icon:IconCode},
- {id:'github',label:'GitHub',Icon:IconBrandGithub},{id:'projects',label:'Projects',Icon:IconTimeline},
+ {id:'github',label:'Work',Icon:IconBriefcase},{id:'projects',label:'Projects',Icon:IconTimeline},
  {id:'resume',label:'Resume',Icon:IconFileCv},{id:'review',label:'Reports',Icon:IconChartBar}
 ];
 const IDLE_MS=15*60_000;
@@ -63,7 +63,7 @@ export default function App(){
     <Menu shadow="md" position="bottom-end"><Menu.Target><button className="avatar-menu" title="Workspace options">K</button></Menu.Target><Menu.Dropdown><Menu.Item leftSection={<IconSettings size={16}/>} onClick={configButton}>Settings & backup</Menu.Item><Menu.Item leftSection={<IconLock size={16}/>} color="red" onClick={lock}>Lock workspace</Menu.Item></Menu.Dropdown></Menu>
    </div>
   </header>
-  <main className="main-content"><div className="page-intro"><div><span className="intro-kicker">YOUR ENGINEERING WORKSPACE <span className="intro-star">✳</span> {page.toUpperCase()}</span><h1>{({overview:'Build. Learn. Repeat.',coding:'Solve the next one.',github:'Proof of work.',projects:'In the making.',resume:'The one-page story.',review:'The bigger picture.'} as Record<NavPage,string>)[page]}</h1><p>{({overview:'A little progress, every single day. It all adds up.',coding:'LeetCode, Codeforces and the problems worth revisiting.',github:'Contributions, merged pull requests and everything shipped.',projects:'Every milestone of the AWS Billing pipeline, tracked.',resume:'Your resume vault, always within reach.',review:'Look beyond today. Measure the weeks that matter.'} as Record<NavPage,string>)[page]}</p></div>
+  <main className="main-content"><div className="page-intro"><div><span className="intro-kicker">YOUR ENGINEERING WORKSPACE <span className="intro-star">✳</span> {page.toUpperCase()}</span><h1>{({overview:'Build. Learn. Repeat.',coding:'Solve the next one.',github:'Proof of work.',projects:'In the making.',resume:'The one-page story.',review:'The bigger picture.'} as Record<NavPage,string>)[page]}</h1><p>{({overview:'A little progress, every single day. It all adds up.',coding:'LeetCode, Codeforces and the problems worth revisiting.',github:'Project evidence, source links and meaningful open-source work.',projects:'Every milestone of the AWS Billing pipeline, tracked.',resume:'Your resume vault, always within reach.',review:'Look beyond today. Measure the weeks that matter.'} as Record<NavPage,string>)[page]}</p></div>
    <div className="intro-right"><span className="last-sync"><span className="status-dot"/> Snapshot {prettyDate(view.updatedAt)}</span><Button variant="filled" color="dark" radius="xl" className="quick-btn" leftSection={<IconBolt size={17}/>} onClick={()=>navigate('projects')}>View milestones</Button></div></div>
   <AnimatePresence mode="wait"><motion.div key={page} initial={{opacity:0,y:9}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-7}} transition={{duration:.18}}>
    {page==='overview'&&<Overview data={view} navigate={navigate}/>}
