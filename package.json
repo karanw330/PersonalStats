@@ -13,12 +13,10 @@
   },
   "dependencies": {
     "@mantine/core": "^7.17.8",
-    "@mantine/dropzone": "^7.17.8",
     "@mantine/hooks": "^7.17.8",
     "@mantine/notifications": "^7.17.8",
     "@tabler/icons-react": "^3.31.0",
     "motion": "^12.23.0",
-    "pdfjs-dist": "^5.4.149",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },
