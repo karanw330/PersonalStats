@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActionIcon, Button, TextInput, PasswordInput, useMantineColorScheme, Tooltip, Menu, Modal, Badge } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { IconArrowRight, IconBolt, IconBriefcase, IconBrandGithub, IconChartDots3, IconCode, IconFileCv, IconLayoutDashboard, IconLock, IconLockOpen, IconMoon, IconRefresh, IconSearch, IconSettings, IconSun, IconTimeline, IconChartBar, IconDownload, IconUpload, IconShieldLock, IconX } from '@tabler/icons-react';
+import { IconArrowRight, IconBolt, IconBriefcase, IconBrandGithub, IconChartDots3, IconCode, IconLayoutDashboard, IconLock, IconLockOpen, IconMoon, IconRefresh, IconSearch, IconSettings, IconSun, IconTimeline, IconChartBar, IconDownload, IconUpload, IconShieldLock, IconX } from '@tabler/icons-react';
 import { motion, AnimatePresence } from 'motion/react';
 import type { DashboardData, NavPage } from './types';
 import { loadDashboard } from './lib/crypto';
@@ -11,13 +11,12 @@ import { Overview } from './pages/Overview';
 import { Coding } from './pages/Coding';
 import { GithubPage } from './pages/Github';
 import { Projects } from './pages/Projects';
-import { Resume } from './pages/Resume';
 import { Review } from './pages/Review';
 
 const NAV: {id:NavPage;label:string;Icon:typeof IconBolt}[]=[
  {id:'overview',label:'Dashboard',Icon:IconLayoutDashboard},{id:'coding',label:'Progress',Icon:IconCode},
  {id:'github',label:'Work',Icon:IconBriefcase},{id:'projects',label:'Projects',Icon:IconTimeline},
- {id:'resume',label:'Resume',Icon:IconFileCv},{id:'review',label:'Reports',Icon:IconChartBar}
+{id:'review',label:'Reports',Icon:IconChartBar}
 ];
 const IDLE_MS=15*60_000;
 const resolveHash=():NavPage=>{const h=location.hash.replace('#','');return NAV.find(n=>n.id===h)?.id||'overview'};
@@ -63,14 +62,13 @@ export default function App(){
     <Menu shadow="md" position="bottom-end"><Menu.Target><button className="avatar-menu" title="Workspace options">K</button></Menu.Target><Menu.Dropdown><Menu.Item leftSection={<IconSettings size={16}/>} onClick={configButton}>Settings & backup</Menu.Item><Menu.Item leftSection={<IconLock size={16}/>} color="red" onClick={lock}>Lock workspace</Menu.Item></Menu.Dropdown></Menu>
    </div>
   </header>
-  <main className="main-content"><div className="page-intro"><div><span className="intro-kicker">YOUR ENGINEERING WORKSPACE <span className="intro-star">✳</span> {page.toUpperCase()}</span><h1>{({overview:'Build. Learn. Repeat.',coding:'Solve the next one.',github:'Proof of work.',projects:'In the making.',resume:'The one-page story.',review:'The bigger picture.'} as Record<NavPage,string>)[page]}</h1><p>{({overview:'A little progress, every single day. It all adds up.',coding:'LeetCode, Codeforces and the problems worth revisiting.',github:'Project evidence, source links and meaningful open-source work.',projects:'Every milestone of the AWS Billing pipeline, tracked.',resume:'Your resume vault, always within reach.',review:'Look beyond today. Measure the weeks that matter.'} as Record<NavPage,string>)[page]}</p></div>
+  <main className="main-content"><div className="page-intro"><div><span className="intro-kicker">YOUR ENGINEERING WORKSPACE <span className="intro-star">✳</span> {page.toUpperCase()}</span><h1>{({overview:'Build. Learn. Repeat.',coding:'Solve the next one.',github:'Proof of work.',projects:'In the making.',review:'The bigger picture.'} as Record<NavPage,string>)[page]}</h1><p>{({overview:'A little progress, every single day. It all adds up.',coding:'LeetCode, Codeforces and the problems worth revisiting.',github:'Project evidence, source links and meaningful open-source work.',projects:'Every milestone of the AWS Billing pipeline, tracked.',review:'Look beyond today. Measure the weeks that matter.'} as Record<NavPage,string>)[page]}</p></div>
    <div className="intro-right"><span className="last-sync"><span className="status-dot"/> Snapshot {prettyDate(view.updatedAt)}</span><Button variant="filled" color="dark" radius="xl" className="quick-btn" leftSection={<IconBolt size={17}/>} onClick={()=>navigate('projects')}>View milestones</Button></div></div>
   <AnimatePresence mode="wait"><motion.div key={page} initial={{opacity:0,y:9}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-7}} transition={{duration:.18}}>
    {page==='overview'&&<Overview data={view} navigate={navigate}/>}
    {page==='coding'&&<Coding data={view} changes={changes!} update={updateChanges}/>}
    {page==='github'&&<GithubPage data={view}/>}
    {page==='projects'&&<Projects data={view} changes={changes!} update={updateChanges}/>}
-   {page==='resume'&&<Resume passphrase={password}/>}
    {page==='review'&&<Review data={view}/>}
   </motion.div></AnimatePresence></main>
   <footer className="site-footer"><span><span className="footer-dot">✳</span> Made to track the work, not the noise.</span><span>DEV PULSE <span className="footer-sep">/</span> 2026</span></footer>
@@ -80,7 +78,7 @@ export default function App(){
  <div><h3>Private data backup</h3><p>Manual changes are encrypted locally on this device. Download a password-encrypted backup to transfer them to another device.</p></div>
  <Button variant="light" leftSection={<IconDownload size={17}/>} onClick={()=>exportChanges(changes!,password).then(()=>notifications.show({message:'Encrypted backup downloaded'})).catch(()=>notifications.show({color:'red',message:'Backup failed'}))}>Export encrypted changes</Button>
  <Button component="label" variant="light" color="gray" leftSection={<IconUpload size={17}/>} loading={importing}>Import encrypted backup<input hidden type="file" accept=".json,application/json" onChange={async e=>{const f=e.target.files?.[0];if(!f)return;setImporting(true);try{const next=await importChanges(f,password);await updateChanges(next);notifications.show({message:'Backup imported'})}catch{notifications.show({color:'red',message:'Could not decrypt this backup with your passphrase'})}finally{setImporting(false);e.target.value=''}}}/></Button>
- <div className="settings-note"><IconShieldLock size={18}/> Data uploaded in the Resume Hub stays encrypted in this browser. No resume or password is sent to a server.</div>
+ <div className="settings-note"><IconShieldLock size={18}/> Your locally saved milestone and revision changes are encrypted in this browser. Your passphrase is not sent to a server.</div>
  <Button variant="light" color="red" leftSection={<IconLock size={17}/>} onClick={lock}>Lock now</Button></div></Modal>
  </div>;
 }
