@@ -31,27 +31,61 @@ async function individually(key, fn) {
   catch(e) { sources[key]={updatedAt:null,error:String(e.message||e).slice(0,130)};console.warn(`[${key}]`,e.message);return null; }
 }
 async function lc() {
- const base=`https://alfa-leetcode-api.onrender.com/${encodeURIComponent(lcuser)}`;
- const parts=await Promise.all(['solved','calendar','skill','submission','contest'].map(async path => {
-   try {return await get(`${base}/${path}`)} catch(e) {console.warn('leetcode/'+path,e.message);return null}
- }));
- const [solved,calendar,skill,submission,contest]=parts;
- if (parts.every(x=>!x)) throw new Error('All LeetCode endpoints failed');
- const s=object(solved),c=object(calendar),sk=object(skill),sub=object(submission),co=object(contest);
- const calRaw=c.submissionCalendar ?? c.calendar ?? c.submission_calendar ?? c.activeYears;
- let dayCounts={};try { const parsed=typeof calRaw==='string'?JSON.parse(calRaw):object(calRaw);for (const [k,v] of Object.entries(parsed)) {
-    const day=/^\d+$/.test(k)?new Date(Number(k)*1000).toISOString().slice(0,10):k.slice(0,10);
-    if(/^\d{4}-\d\d-\d\d$/.test(day))dayCounts[day]=Number(v)||0;
- }}catch{}
- if(!Object.keys(dayCounts).length && Array.isArray(c.submissionCalendar)) for(const x of c.submissionCalendar) if(x.date)dayCounts[str(x.date).slice(0,10)]=Number(x.count)||0;
- const topicInput=[...arr(sk.advanced),...arr(sk.intermediate),...arr(sk.fundamental),...arr(sk.topics)];
- const topics=topicInput.map(t=>({name:str(t.tagName||t.name||t.tagSlug),count:number(t.problemsSolved??t.count??t.solved)||0})).filter(t=>t.name).sort((a,b)=>b.count-a.count);
- const entries=arr(sub.submission||sub.submissions||sub.recentSubmissionList||sub);
- const recent=entries.slice(0,15).map(t=>({title:str(t.title||t.titleSlug||'Submission'),status:str(t.statusDisplay||t.status||'Unknown'),date:unixISO(t.timestamp)||str(t.date)}));
- return {username:lcuser,solved:number(s.solvedProblem??s.totalSolved??s.solved??s.totalSolvedNum),totalQuestions:number(s.totalQuestions),
- difficulty:{easy:number(s.easySolved??s.easySolvedCount)||0,medium:number(s.mediumSolved??s.mediumSolvedCount)||0,hard:number(s.hardSolved??s.hardSolvedCount)||0},
- calendar:dayCounts,topics,recent,contestRating:number(co.contestRating??co.rating??co?.userContestRanking?.rating)};
+ // Prefer LeetCode's own public GraphQL profile data to a rate-limited proxy.
+ const query = `query dashboardProfile($username: String!) {
+   matchedUser(username: $username) {
+     submitStatsGlobal { acSubmissionNum { difficulty count } }
+     userCalendar { submissionCalendar }
+   }
+   recentAcSubmissionList(username: $username, limit: 15) {
+     title titleSlug timestamp
+   }
+ }`;
+ const parseCalendar = raw => {
+   const result = {};
+   try {
+     const obj = typeof raw === 'string' ? JSON.parse(raw) : object(raw);
+     for (const [k, v] of Object.entries(obj)) {
+       const day = /^\\d+$/.test(k) ? new Date(Number(k) * 1000).toISOString().slice(0, 10) : k.slice(0, 10);
+       if (/^\\d{4}-\\d\\d-\\d\\d$/.test(day)) result[day] = number(v) ?? 0;
+     }
+   } catch (e) { console.warn('LeetCode calendar parse:', e.message); }
+   return result;
+ };
+ try {
+   const response = await get('https://leetcode.com/graphql/', {
+     method: 'POST', body: { query, variables: { username: lcuser } }
+   });
+   if (response.errors?.length) throw new Error(response.errors.map(e => e.message).join('; '));
+   const profile = response.data?.matchedUser;
+   if (!profile) throw new Error('LeetCode user profile unavailable');
+   const counts = arr(profile.submitStatsGlobal?.acSubmissionNum);
+   const count = difficulty => number(counts.find(x => x.difficulty === difficulty)?.count);
+   const easy = count('Easy'), medium = count('Medium'), hard = count('Hard');
+   const solved = count('All') ?? (easy !== null && medium !== null && hard !== null ? easy + medium + hard : null);
+   const recent = arr(response.data?.recentAcSubmissionList).map(s => ({
+     title: str(s.title || s.titleSlug), status: 'Accepted', date: unixISO(s.timestamp)
+   }));
+   if (solved === null) throw new Error('LeetCode solved counts missing');
+   return { username: lcuser, solved, totalQuestions: null,
+     difficulty: { easy: easy ?? 0, medium: medium ?? 0, hard: hard ?? 0 },
+     calendar: parseCalendar(profile.userCalendar?.submissionCalendar),
+     topics: [], recent, contestRating: null };
+ } catch (e) {
+   console.warn('LeetCode direct GraphQL unavailable:', e.message);
+ }
+ // One lightweight fallback request rather than five simultaneous proxy calls.
+ const base = `https://alfa-leetcode-api.onrender.com/${encodeURIComponent(lcuser)}`;
+ const s = object(await get(`${base}/solved`));
+ const solved = number(s.solvedProblem ?? s.totalSolved ?? s.solved ?? s.totalSolvedNum);
+ if (solved === null) throw new Error('LeetCode direct and fallback sources unavailable');
+ return { username: lcuser, solved, totalQuestions: number(s.totalQuestions),
+   difficulty: { easy: number(s.easySolved ?? s.easySolvedCount) ?? 0,
+     medium: number(s.mediumSolved ?? s.mediumSolvedCount) ?? 0,
+     hard: number(s.hardSolved ?? s.hardSolvedCount) ?? 0 },
+   calendar: {}, topics: [], recent: [], contestRating: null };
 }
+
 async function gh() {
  const root='https://api.github.com'; const enc=encodeURIComponent(username);
  const [profile, events, prs] = await Promise.all([
