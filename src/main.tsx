@@ -7,6 +7,7 @@ import '@mantine/notifications/styles.css';
 import { Notifications } from '@mantine/notifications';
 import App from './App';
 import './styles/app.css';
+import './styles/responsive.css';
 
 const theme = createTheme({
   fontFamily: 'DM Sans, sans-serif', headings: { fontFamily: 'Manrope, sans-serif' },
