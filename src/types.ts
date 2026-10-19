@@ -25,4 +25,4 @@ export type DashboardData = {
   backlog: { title: string; topic: string; priority: string }[];
   goals: { leetcodeTarget: number; targetDate: string };
 };
-export type NavPage = 'overview' | 'coding' | 'github' | 'projects' | 'resume' | 'review';
+export type NavPage = 'overview' | 'coding' | 'github' | 'projects' | 'review';
