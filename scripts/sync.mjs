@@ -46,8 +46,8 @@ async function lc() {
    try {
      const obj = typeof raw === 'string' ? JSON.parse(raw) : object(raw);
      for (const [k, v] of Object.entries(obj)) {
-       const day = /^\\d+$/.test(k) ? new Date(Number(k) * 1000).toISOString().slice(0, 10) : k.slice(0, 10);
-       if (/^\\d{4}-\\d\\d-\\d\\d$/.test(day)) result[day] = number(v) ?? 0;
+       const day = /^\d+$/.test(k) ? new Date(Number(k) * 1000).toISOString().slice(0, 10) : k.slice(0, 10);
+       if (/^\d{4}-\d\d-\d\d$/.test(day)) result[day] = number(v) ?? 0;
      }
    } catch (e) { console.warn('LeetCode calendar parse:', e.message); }
    return result;
