@@ -8,7 +8,6 @@ A colorful, static, encrypted engineering-progress dashboard built with **React,
 - **Competitive coding:** LeetCode solved/difficulty/topic breakdown, calendar mosaic, latest submissions; Codeforces rating history, distinct solved problems, rating distribution.
 - **GitHub:** public repositories, activity, merged PRs, optional authenticated contribution calendar.
 - **AWS Billing:** seven phases and 34 individual milestones imported from Markdown; editable checkboxes saved encrypted locally.
-- **Resume Hub:** PDF drag & drop, in-browser PDF.js text extraction, local encrypted IndexedDB storage, preview, primitive token diff against prior PDF. No cloud upload.
 - **Reports:** daily history, seven-snapshot comparisons, export Markdown progress report.
 - **Workspace:** strong-passphrase decrypt screen, 15-minute idle lock, light/dark mode, keyboard navigation via `Ctrl + K`, encrypted progress-settings import/export.
 
@@ -43,7 +42,6 @@ Remove-Variable secret
 
 ## Deploy to GitHub Pages
 
-1. **Set a strong, unique password** using the local instructions. Use the *same* password for future refresh runs. Commit the encrypted `private/config.enc.json`, **not** the source milestone Markdown. Do not push the redacted resume sample or the real resume.
 2. Create a GitHub repository named **`devpulse`** and push the project. GitHub Free requires a **public repository** for Pages; private docs should **never** be committed in plaintext to that repository. Use `git status` to review staged files, and verify `.gitignore` is respected.
 3. In the repo, open **Settings → Secrets and variables → Actions → New repository secret**, add `DEVPULSE_PASSPHRASE` with the exact passphrase you used locally. **Do not send it to anyone.** GitHub's built-in `GITHUB_TOKEN` covers normal public API calls. An optional secret `GH_API_TOKEN` can contain a narrowly scoped GitHub personal access token if necessary for the contribution graph.
 4. Open **Settings → Pages → Build and deployment**, select **GitHub Actions** as the source.
@@ -61,7 +59,6 @@ Workflows also run daily at `03:17 UTC` (~08:47 IST). GitHub can delay or skip s
 - GitHub Pages is **public**. A lock screen **without encryption** would not protect JSON files. Instead, all dashboard JSON is encrypted with **AES-256-GCM** using a random 16-byte salt, random 12-byte nonce and PBKDF2-SHA256 (310,000 iterations) *before deployment*. The passphrase is **not embedded** in static site code.
 - You must use a strong passphrase, **not a 4–6 digit PIN**: an attacker can download the ciphertext and attempt **offline guesses**. A frontend lock has no rate limiter that can stop offline guessing.
 - The encrypted seed `private/config.enc.json` is committed as ciphertext to the public repository. Its security rests on the secret passphrase. **Raw** milestone Markdown lives in a gitignored file, provided in this zip only for initial setup, not committed.
-- Resume PDFs are encrypted in the **browser's IndexedDB**, and the plaintext exists in memory temporarily while unlocked. IndexedDB data can be lost when clearing browser data. Export a separate PDF backup yourself.
 - Edits to milestones/goals/backlog are **local to your browser** and encrypted in localStorage; use **Settings → Export encrypted changes** to back up or move them to another browser. Changes are not written into the GitHub Actions source seed.
 - Encryption does **not** protect you from a malicious website script, compromised build dependency, compromised GitHub account, malware/browser extensions, a weak passphrase, or malicious code published to your Pages domain. Review PRs and dependencies, use 2FA, and limit repository access.
 - Public GitHub/LeetCode/Codeforces activity remains public on its original platforms even when you encrypt its *copy* in this dashboard.
@@ -93,10 +90,10 @@ npm run selftest    # verify Node encryption/decryption and integrity failure
 ```text
 src/
   App.tsx                  authenticated shell, navigation, session lock
-  pages/                   dashboard, coding, GitHub, projects, resume, reports
+  pages/                   dashboard, coding, Work, projects, reports
   components/Visuals.tsx  custom charts and visual primitives
   styles/app.css           bento layout, themes, responsive styling
-  lib/                     Web Crypto, PDF.js, local encrypted preferences
+  lib/                     Web Crypto and local encrypted preferences
 scripts/
   init-vault.mjs           milestone import and encrypted private seed
   sync.mjs                 API collector and encrypted data emitter
@@ -112,7 +109,7 @@ public/data/
 ## Known limitations
 
 - Milestone completion can be edited in the browser but does not sync across devices without manual encrypted backup transfer.
-- The PDF text diff is word-set based, not a layout-aware semantic diff. Scanned PDF pages need OCR (not included).
+- PDF uploads and resume storage are intentionally not part of DevPulse.
 - This is static-site encryption, not enterprise authentication or zero-trust identity management.
 - The current GitHub data model deliberately counts activity and PRs, **not GitHub code submissions as a ranked contest platform does**.
 - API responses can change, or external services can rate-limit scheduled requests. Sync errors are visible through freshness indicators, and source normalizers may need updates.
