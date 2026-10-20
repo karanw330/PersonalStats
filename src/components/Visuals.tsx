@@ -3,13 +3,21 @@ import { motion, useReducedMotion } from 'motion/react';
 import type { Phase } from '../types';
 import { fmt } from '../lib/utils';
 
+function dayLabel(day:string, count:number, noun:string) {
+ const date = new Date(`${day}T12:00:00Z`);
+ const formatted = new Intl.DateTimeFormat('en-IN', { weekday:'long', day:'numeric', month:'long', year:'numeric', timeZone:'UTC' }).format(date);
+ return `${formatted} · ${count} ${noun}`;
+}
+function localDay(date:Date) {
+ return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+}
 type ActivityProps={calendar:Record<string,number>;days?:number;className?:string};
 export function ActivitySkyline({calendar,days=35,className=''}:ActivityProps){
  const end=new Date();end.setHours(12,0,0,0);
- const dates=Array.from({length:days},(_,i)=>{const d=new Date(end);d.setDate(end.getDate()-days+1+i);return d.toISOString().slice(0,10)});
+ const dates=Array.from({length:days},(_,i)=>{const d=new Date(end);d.setDate(end.getDate()-days+1+i);return localDay(d)});
  const max=Math.max(1,...dates.map(d=>calendar[d]||0));
  return <div className={`skyline ${className}`} aria-label="Daily activity over the last several weeks">
-  <div className="skyline-bars">{dates.map((d,i)=>{const v=calendar[d]||0;return <div title={`${d}: ${v} contributions`} key={d} className={`sky-bar ${!v?'sky-empty':''}`} style={{height:`${Math.max(v?17:10, v/max*100)}%`, '--i':i, '--v':v} as React.CSSProperties}><span/></div>})}</div>
+  <div className="skyline-bars">{dates.map((d,i)=>{const v=calendar[d]||0;return <div title={dayLabel(d,v,'contributions')} aria-label={dayLabel(d,v,'contributions')} tabIndex={0} key={d} className={`sky-bar ${!v?'sky-empty':''}`} style={{height:`${Math.max(v?17:10, v/max*100)}%`, '--i':i, '--v':v} as React.CSSProperties}><span/></div>})}</div>
   <div className="axis"><span>{dates[0].slice(5)}</span><span>DAILY ACTIVITY</span><span>NOW</span></div>
  </div>;
 }
@@ -27,8 +35,8 @@ export function GoalOrbit({value,target,accent='var(--lavender)',size=150}:{valu
 }
 export function ActivityMosaic({calendar,weeks=16}:{calendar:Record<string,number>;weeks?:number}){
  const end=new Date();end.setHours(12,0,0,0);const sunday=new Date(end);sunday.setDate(end.getDate()-end.getDay());
- const boxes=Array.from({length:weeks*7},(_,i)=>{const d=new Date(sunday);d.setDate(sunday.getDate()-(weeks-1)*7+i);return d.toISOString().slice(0,10)});
- return <div className="mosaic-wrap"><div className="mosaic">{boxes.map(d=>{const n=calendar[d]||0;return <div key={d} title={`${d}: ${n}`} className="mosaic-cell" data-level={n===0?0:n<3?1:n<6?2:n<10?3:4} />})}</div><div className="mosaic-legend"><span>Less</span>{[0,1,2,3,4].map(x=><i key={x} data-level={x}/>)}<span>More</span></div></div>
+ const boxes=Array.from({length:weeks*7},(_,i)=>{const d=new Date(sunday);d.setDate(sunday.getDate()-(weeks-1)*7+i);return localDay(d)});
+ return <div className="mosaic-wrap"><div className="mosaic">{boxes.map(d=>{const n=calendar[d]||0;return <div key={d} title={dayLabel(d,n,'submissions')} aria-label={dayLabel(d,n,'submissions')} tabIndex={0} className="mosaic-cell" data-level={n===0?0:n<3?1:n<6?2:n<10?3:4} />})}</div><div className="mosaic-legend"><span>Less</span>{[0,1,2,3,4].map(x=><i key={x} data-level={x}/>)}<span>More</span></div></div>
 }
 export function DifficultyStack({easy,medium,hard}:{easy:number;medium:number;hard:number}){
  const total=easy+medium+hard;
