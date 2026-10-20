@@ -1,5 +1,6 @@
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { seal, unseal } from './vault.mjs';
+import { fetchAllCodeforcesSubmissions, summarizeCodeforcesSolves } from './codeforces.mjs';
 
 const p = process.env.DEVPULSE_PASSPHRASE;
 if (!p) {console.error('Missing DEVPULSE_PASSPHRASE'); process.exit(1);}
@@ -109,14 +110,22 @@ async function gh() {
 }
 async function cf() {
  const base='https://codeforces.com/api/'; const h=encodeURIComponent(cfhandle);
- const [users,ratings,submissions]=await Promise.all([get(`${base}user.info?handles=${h}`),get(`${base}user.rating?handle=${h}`).catch(()=>({result:[]})),get(`${base}user.status?handle=${h}&from=1&count=2000`).catch(()=>({result:[]}))]);
+ // Do not silently treat a failed history request as zero solved problems.
+ const [users,ratings]=await Promise.all([
+   get(`${base}user.info?handles=${h}`),
+   get(`${base}user.rating?handle=${h}`).catch(()=>({result:[]}))
+ ]);
  const profile=arr(users.result)[0];if(!profile)throw new Error('Codeforces profile not found');
  const contests=arr(ratings.result).map(r=>({date:Number(r.ratingUpdateTimeSeconds),rating:Number(r.newRating),name:str(r.contestName)}));
- const byId=new Set(),difficulty={};for(const s of arr(submissions.result))if(s.verdict==='OK'){
-  const id=`${s.problem?.contestId}-${s.problem?.index}`; if(byId.has(id))continue;byId.add(id);const d=number(s.problem?.rating);if(d!==null)difficulty[str(d)]=(difficulty[str(d)]||0)+1;
- }
- return {handle:cfhandle,rating:number(profile.rating),maxRating:number(profile.maxRating),rank:profile.rank||null,contests,solved:byId.size||null,difficulty};
+ const {submissions,pages}=await fetchAllCodeforcesSubmissions(
+   async (from,count)=>get(`${base}user.status?handle=${h}&from=${from}&count=${count}`),
+   {pause:()=>new Promise(resolve=>setTimeout(resolve,400))}
+ );
+ const {solved,difficulty}=summarizeCodeforcesSolves(submissions);
+ console.log(`[codeforces] Fetched ${submissions.length} submissions in ${pages} page(s); distinct accepted problems: ${solved}`);
+ return {handle:cfhandle,rating:number(profile.rating),maxRating:number(profile.maxRating),rank:profile.rank||null,contests,solved,difficulty};
 }
+
 // Failures do not fabricate stats: preserve the previous successful snapshot where possible.
 const previousPath=new URL('../private/last-good.enc.json',import.meta.url);
 let previous=null;try{previous=unseal(JSON.parse(await readFile(previousPath,'utf8')),p)}catch{}
