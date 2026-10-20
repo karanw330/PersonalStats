@@ -2,7 +2,8 @@ name: Refresh and deploy DevPulse
 on:
   workflow_dispatch:
   schedule:
-    - cron: '17 3 * * *'
+    # 18:25 UTC = 23:55 IST (Asia/Kolkata), daily.
+    - cron: '25 18 * * *'
   push:
     branches: [master]
 permissions:
