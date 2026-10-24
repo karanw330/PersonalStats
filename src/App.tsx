@@ -5,6 +5,7 @@ import { IconArrowRight, IconBolt, IconBriefcase, IconBrandGithub, IconChartDots
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import type { DashboardData, NavPage } from './types';
 import { loadDashboard } from './lib/crypto';
+import { refreshPublicData } from './lib/live-refresh';
 import { eraseLegacyResumeStorage } from './lib/legacy-resume-cleanup';
 import { loadLocalChanges, saveLocalChanges, exportChanges, importChanges, type LocalChanges } from './lib/preferences';
 import { prettyDate } from './lib/utils';
@@ -27,7 +28,7 @@ export default function App(){
  const [page,setPage]=useState<NavPage>(resolveHash);
  const [password,setPassword]=useState('');const [entered,setEntered]=useState('');
  const [data,setData]=useState<DashboardData|null>(null);const [changes,setChanges]=useState<LocalChanges|null>(null);
- const [error,setError]=useState('');const [loading,setLoading]=useState(false);
+ const [error,setError]=useState('');const [loading,setLoading]=useState(false);const [refreshing,setRefreshing]=useState(false);
  const [command,setCommand]=useState(false);const [query,setQuery]=useState('');const [settings,setSettings]=useState(false);
  const [importing,setImporting]=useState(false);const inputRef=useRef<HTMLInputElement|null>(null);
  const lastActivity=useRef(Date.now());
@@ -50,6 +51,13 @@ export default function App(){
   const local=await loadLocalChanges(entered);setPassword(entered);setData(result);
   setChanges(local||{milestones:{},backlog:result.backlog,goals:result.goals});setEntered('');lastActivity.current=Date.now();
  }catch(ex){setError(ex instanceof Error?ex.message:'Unable to unlock dashboard.');}finally{setLoading(false)}}
+ const refresh=async()=>{if(!data||refreshing)return;setRefreshing(true);try{
+  const result=await refreshPublicData(data,password);setData(result.data);
+  const failures=Object.entries(result.errors).map(([key,message])=>key+': '+message);
+  notifications.show({color:result.refreshed.length?(failures.length?'yellow':'green'):'red',
+   title:result.refreshed.length?'Refresh complete':'Live refresh unavailable',
+   message:(result.refreshed.length?'Updated: '+result.refreshed.join(', ')+'. ':'')+(result.snapshotChanged?'New deployed snapshot loaded. ':'')+(failures.length?'Failed: '+failures.join('; '):'All public sources fetched.')});
+ }catch(ex){notifications.show({color:'red',title:'Refresh failed',message:ex instanceof Error?ex.message:'Unknown error'});}finally{setRefreshing(false)}};
  const updateChanges=async(next:LocalChanges)=>{setChanges(next);try{await saveLocalChanges(next,password)}catch{notifications.show({color:'red',message:'Could not save changes locally'})}};
  const view=useMemo(()=>{if(!data)return null;const local=changes||{milestones:{},backlog:data.backlog,goals:data.goals};return {...data,backlog:local.backlog,goals:local.goals,phases:data.phases.map(p=>({...p,milestones:p.milestones.map(m=>({...m,done:local.milestones[m.id]??m.done}))}))}},[data,changes]);
  const configButton=()=>setSettings(true);
@@ -69,6 +77,7 @@ export default function App(){
   <header className="topbar"><div className="brand" onClick={()=>navigate('overview')} role="button" tabIndex={0} onKeyDown={e=>e.key==='Enter'&&navigate('overview')}><span className="brand-mark"><IconBolt size={23}/></span><span className="brand-name">devpulse<span>.</span></span></div>
    <nav className="nav-pills" aria-label="Main navigation">{NAV.map(({id,label,Icon})=><button type="button" key={id} className={`nav-pill ${page===id?'active':''}`} onClick={()=>navigate(id)} aria-current={page===id?'page':undefined}>{page===id&&<motion.span layoutId="active-nav-pill" className="nav-pill-background" transition={reduceMotion?{duration:0}:{type:'spring',stiffness:420,damping:37}}/>}<Icon size={17} stroke={1.75}/><span>{label}</span></button>)}</nav>
    <div className="top-actions"><Tooltip label="Search (Ctrl+K)"><ActionIcon variant="subtle" size={39} radius="xl" color="dark" onClick={()=>setCommand(true)} aria-label="Search"><IconSearch size={19}/></ActionIcon></Tooltip>
+    <Tooltip label="Refresh all public data"><ActionIcon variant="subtle" size={39} radius="xl" color="dark" onClick={()=>void refresh()} loading={refreshing} aria-label="Refresh dashboard data"><IconRefresh size={19}/></ActionIcon></Tooltip>
     <button className="theme-toggle" onClick={()=>setColorScheme(colorScheme==='dark'?'light':'dark')} title="Toggle theme">{colorScheme==='dark'?<IconSun size={20}/>:<IconMoon size={20}/>}</button>
     <Menu shadow="md" position="bottom-end"><Menu.Target><button className="avatar-menu" title="Workspace options">K</button></Menu.Target><Menu.Dropdown><Menu.Item leftSection={<IconSettings size={16}/>} onClick={configButton}>Settings & backup</Menu.Item><Menu.Item leftSection={<IconLock size={16}/>} color="red" onClick={lock}>Lock workspace</Menu.Item></Menu.Dropdown></Menu>
    </div>
