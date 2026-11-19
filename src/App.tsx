@@ -7,7 +7,7 @@ import type { DashboardData, NavPage } from './types';
 import { loadDashboard } from './lib/crypto';
 import { refreshPublicData } from './lib/live-refresh';
 import { eraseLegacyResumeStorage } from './lib/legacy-resume-cleanup';
-import { loadLocalChanges, saveLocalChanges, exportChanges, importChanges, parseMilestoneMarkdown, type LocalChanges } from './lib/preferences';
+import { loadLocalChanges, saveLocalChanges, exportChanges, importChanges, type LocalChanges } from './lib/preferences';
 import { prettyDate } from './lib/utils';
 import { Overview } from './pages/Overview';
 import { Coding } from './pages/Coding';
@@ -30,7 +30,7 @@ export default function App(){
  const [data,setData]=useState<DashboardData|null>(null);const [changes,setChanges]=useState<LocalChanges|null>(null);
  const [error,setError]=useState('');const [loading,setLoading]=useState(false);const [refreshing,setRefreshing]=useState(false);
  const [command,setCommand]=useState(false);const [query,setQuery]=useState('');const [settings,setSettings]=useState(false);
- const [importing,setImporting]=useState(false);const [importingRoadmap,setImportingRoadmap]=useState(false);const inputRef=useRef<HTMLInputElement|null>(null);
+ const [importing,setImporting]=useState(false);const inputRef=useRef<HTMLInputElement|null>(null);
  const lastActivity=useRef(Date.now());
  // Delete only the retired Resume Hub database; keep all current workspace preferences.
  useEffect(() => {
@@ -103,8 +103,6 @@ export default function App(){
  <div><h3>Private data backup</h3><p>Manual changes are encrypted locally on this device. Download a password-encrypted backup to transfer them to another device.</p></div>
  <Button variant="light" leftSection={<IconDownload size={17}/>} onClick={()=>exportChanges(changes!,password).then(()=>notifications.show({message:'Encrypted backup downloaded'})).catch(()=>notifications.show({color:'red',message:'Backup failed'}))}>Export encrypted changes</Button>
  <Button component="label" variant="light" color="gray" leftSection={<IconUpload size={17}/>} loading={importing}>Import encrypted backup<input hidden type="file" accept=".json,application/json" onChange={async e=>{const f=e.target.files?.[0];if(!f)return;setImporting(true);try{const next=await importChanges(f,password);await updateChanges(next);notifications.show({message:'Backup imported'})}catch{notifications.show({color:'red',message:'Could not decrypt this backup with your passphrase'})}finally{setImporting(false);e.target.value=''}}}/></Button>
- <div><h3>AWS milestone roadmap</h3><p>Import the updated five-phase Markdown plan. It stays encrypted in this browser; your goals and revision backlog are preserved. Existing milestone overrides for matching IDs are reset to the imported checklist.</p></div>
- <Button component="label" variant="light" color="gray" leftSection={<IconUpload size={17}/>} loading={importingRoadmap}>Import AWS roadmap (.md)<input hidden type="file" accept=".md,text/markdown,text/plain" onChange={async e=>{const f=e.target.files?.[0];if(!f)return;setImportingRoadmap(true);try{const phases=parseMilestoneMarkdown(await f.text());await updateChanges({...changes!,phases,milestones:{},roadmapRevision:undefined});notifications.show({message:`Imported ${phases.length} phases and ${phases.reduce((n,p)=>n+p.milestones.length,0)} milestones`});setSettings(false)}catch(ex){notifications.show({color:'red',message:ex instanceof Error?ex.message:'Could not import roadmap'})}finally{setImportingRoadmap(false);e.target.value=''}}}/></Button>
  <div className="settings-note"><IconShieldLock size={18}/> Your locally saved milestone and revision changes are encrypted in this browser. Your passphrase is not sent to a server.</div>
  <Button variant="light" color="red" leftSection={<IconLock size={17}/>} onClick={lock}>Lock now</Button></div></Modal>
  </div>;
