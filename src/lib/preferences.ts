@@ -1,6 +1,6 @@
 import { sealObject, unsealObject, type Sealed } from './crypto';
 import type { DashboardData, Phase } from '../types';
-export type LocalChanges={ milestones:Record<string,boolean>; backlog:DashboardData['backlog']; goals:DashboardData['goals']; phases?:Phase[] };
+export type LocalChanges={ milestones:Record<string,boolean>; backlog:DashboardData['backlog']; goals:DashboardData['goals']; phases?:Phase[]; roadmapRevision?:string };
 const KEY='devpulse-changes-v1';
 export async function loadLocalChanges(password:string):Promise<LocalChanges|null>{
   const val=localStorage.getItem(KEY);if(!val)return null;
