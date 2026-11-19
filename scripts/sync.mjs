@@ -1,10 +1,12 @@
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { seal, unseal } from './vault.mjs';
+import { readRoadmap, ROADMAP_REVISION } from './roadmap.mjs';
 import { fetchAllCodeforcesSubmissions, summarizeCodeforcesSolves } from './codeforces.mjs';
 
 const p = process.env.DEVPULSE_PASSPHRASE;
 if (!p) {console.error('Missing DEVPULSE_PASSPHRASE'); process.exit(1);}
 const conf = unseal(JSON.parse(await readFile(new URL('../private/config.enc.json',import.meta.url),'utf8')),p);
+const phases = await readRoadmap();
 const username = process.env.GITHUB_USERNAME || 'karanw330';
 const lcuser = process.env.LEETCODE_USERNAME || 'karanw330';
 const cfhandle = process.env.CODEFORCES_HANDLE || 'karanw330';
@@ -135,7 +137,7 @@ const fallback = {leetcode:{username:lcuser,solved:null,totalQuestions:null,diff
 const history=arr(previous?.weekly).slice(-51);
 const date=now.slice(0,10), prevLast=history.at(-1);
 const combined={schema:1,updatedAt:now,sources,leetcode:l||previous?.leetcode||fallback.leetcode,github:g||previous?.github||fallback.github,codeforces:c||previous?.codeforces||fallback.codeforces,
- phases:conf.phases,backlog:conf.backlog,goals:conf.goals,weekly:history};
+ phases,roadmapRevision:ROADMAP_REVISION,backlog:conf.backlog,goals:conf.goals,weekly:history};
 const snap={date,leetcode:combined.leetcode.solved,github:combined.github.contributions,codeforces:combined.codeforces.rating,milestones:combined.phases.flatMap(x=>x.milestones).filter(x=>x.done).length};
 if(!prevLast || prevLast.date!==date)combined.weekly.push(snap);else combined.weekly[combined.weekly.length-1]=snap;
 await mkdir(new URL('../public/data/',import.meta.url),{recursive:true});
