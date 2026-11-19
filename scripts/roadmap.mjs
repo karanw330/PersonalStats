@@ -14,9 +14,9 @@ export function parseRoadmap(markdown) {
     const content = markdown.slice(h.index + h[0].length, end < 0 ? undefined : end);
     const milestones = [...content.matchAll(/^- \[([ x])\] \*\*((F\d+|M\d+\.\d+) — ([^*]+))\*\* ([^\n]*)$/gm)]
       .map(m => ({
-        id: m[2],
-        title: m[3].trim(),
-        description: m[4].trim(),
+        id: m[3],
+        title: m[4].trim(),
+        description: m[5].trim(),
         done: m[1] === 'x'
       }));
     if (!milestones.length) throw new Error('Missing milestones for section ' + h[1]);
