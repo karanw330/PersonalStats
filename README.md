@@ -7,7 +7,7 @@ A colorful, static, encrypted engineering-progress dashboard built with **React,
 - **Overview:** pastel bento tiles, contribution skyline, LeetCode goal orbit, AWS mission rail, revision queue.
 - **Competitive coding:** LeetCode solved/difficulty/topic breakdown, calendar mosaic, latest submissions; Codeforces rating history, distinct solved problems, rating distribution.
 - **GitHub:** public repositories, activity, merged PRs, optional authenticated contribution calendar.
-- **AWS Billing:** seven phases and 34 individual milestones imported from Markdown; editable checkboxes saved encrypted locally.
+- **AWS Billing:** five current development phases, imported from updated Markdown in Settings; editable checkboxes saved encrypted locally.
 - **Reports:** daily history, seven-snapshot comparisons, export Markdown progress report.
 - **Workspace:** strong-passphrase decrypt screen, 15-minute idle lock, light/dark mode, keyboard navigation via `Ctrl + K`, encrypted progress-settings import/export.
 
@@ -108,7 +108,7 @@ public/data/
 
 ## Known limitations
 
-- Milestone completion can be edited in the browser but does not sync across devices without manual encrypted backup transfer.
+- Milestone completion and imported roadmap are encrypted in the browser but do not sync across devices without manual encrypted backup transfer. To replace the old seven-phase roadmap, open Settings & backup → Import AWS roadmap (.md), choose the updated milestone Markdown, and export an encrypted backup if you need to transfer it. The import resets checkbox overrides for matching milestone IDs but preserves goals and revision backlog. The encrypted repository seed remains unchanged until regenerated separately.
 - The retired Resume Hub's encrypted IndexedDB database (`devpulse-resume-v1`) is deleted automatically when the updated site next loads in each browser profile. The deletion does not touch milestone overrides, other local settings, or files stored elsewhere. If an old DevPulse tab blocks deletion, close other tabs and reload. Browsers that never open the updated site will retain their old local data until manually cleared.
 - This is static-site encryption, not enterprise authentication or zero-trust identity management.
 - The current GitHub data model deliberately counts activity and PRs, **not GitHub code submissions as a ranked contest platform does**.
