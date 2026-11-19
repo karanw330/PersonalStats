@@ -6,7 +6,7 @@ const p = process.env.DEVPULSE_PASSPHRASE;
 if (!p) {console.error('Missing DEVPULSE_PASSPHRASE'); process.exit(1);}
 const conf = unseal(JSON.parse(await readFile(new URL('../private/config.enc.json',import.meta.url),'utf8')),p);
 const username = process.env.GITHUB_USERNAME || 'karanw330';
-const lcuser = process.env.LEETCODE_USERNAME || 'pUH5KueiJ3';
+const lcuser = process.env.LEETCODE_USERNAME || 'karanw330';
 const cfhandle = process.env.CODEFORCES_HANDLE || 'karanw330';
 const githubToken = process.env.GH_API_TOKEN || process.env.GITHUB_TOKEN || '';
 const now = new Date().toISOString();
