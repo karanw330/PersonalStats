@@ -20,7 +20,7 @@ export type CF = {
 };
 export type Snapshot = { date: string; leetcode: number | null; github: number | null; codeforces: number | null; milestones: number };
 export type DashboardData = {
-  schema: 1; updatedAt: string; sources: Record<string, { updatedAt: string | null; error: string | null }>;
+  schema: 1; roadmapRevision?: string; updatedAt: string; sources: Record<string, { updatedAt: string | null; error: string | null }>;
   leetcode: LC; github: Github; codeforces: CF; phases: Phase[]; weekly: Snapshot[];
   backlog: { title: string; topic: string; priority: string }[];
   goals: { leetcodeTarget: number; targetDate: string };
