@@ -49,7 +49,12 @@ export default function App(){
  async function unlock(e?:React.FormEvent){e?.preventDefault();if(!entered.trim())return;setLoading(true);setError('');try{
   const result=await loadDashboard(entered);if(result.schema!==1||!result.phases)throw new Error('Invalid dashboard data');
   const local=await loadLocalChanges(entered);setPassword(entered);setData(result);
-  setChanges(local||{milestones:{},backlog:result.backlog,goals:result.goals});setEntered('');lastActivity.current=Date.now();
+  // Old locally imported/checkmarked milestones must never shadow the canonical updated roadmap.
+  const migrated=local&&result.roadmapRevision&&local.roadmapRevision!==result.roadmapRevision
+    ? {...local,milestones:{},phases:undefined,roadmapRevision:result.roadmapRevision}
+    : local;
+  setChanges(migrated||{milestones:{},backlog:result.backlog,goals:result.goals,roadmapRevision:result.roadmapRevision});
+  if(migrated&&migrated!==local)await saveLocalChanges(migrated,entered);setEntered('');lastActivity.current=Date.now();
  }catch(ex){setError(ex instanceof Error?ex.message:'Unable to unlock dashboard.');}finally{setLoading(false)}}
  const refresh=async()=>{if(!data||refreshing)return;setRefreshing(true);try{
   const result=await refreshPublicData(data,password);setData(result.data);
@@ -59,7 +64,7 @@ export default function App(){
    message:(result.refreshed.length?'Updated: '+result.refreshed.join(', ')+'. ':'')+(result.snapshotChanged?'New deployed snapshot loaded. ':'')+(failures.length?'Failed: '+failures.join('; '):'All public sources fetched.')});
  }catch(ex){notifications.show({color:'red',title:'Refresh failed',message:ex instanceof Error?ex.message:'Unknown error'});}finally{setRefreshing(false)}};
  const updateChanges=async(next:LocalChanges)=>{setChanges(next);try{await saveLocalChanges(next,password)}catch{notifications.show({color:'red',message:'Could not save changes locally'})}};
- const view=useMemo(()=>{if(!data)return null;const local=changes||{milestones:{},backlog:data.backlog,goals:data.goals};return {...data,backlog:local.backlog,goals:local.goals,phases:(local.phases||data.phases).map(p=>({...p,milestones:p.milestones.map(m=>({...m,done:local.milestones[m.id]??m.done}))}))}},[data,changes]);
+ const view=useMemo(()=>{if(!data)return null;const local=changes||{milestones:{},backlog:data.backlog,goals:data.goals};return {...data,backlog:local.backlog,goals:local.goals,phases:(data.roadmapRevision ? data.phases : (local.phases||data.phases)).map(p=>({...p,milestones:p.milestones.map(m=>({...m,done:local.milestones[m.id]??m.done}))}))}},[data,changes]);
  const configButton=()=>setSettings(true);
  if(!view)return <div className="auth-stage">
   <div className="auth-light auth-light-1"/><div className="auth-light auth-light-2"/>
@@ -99,7 +104,7 @@ export default function App(){
  <Button variant="light" leftSection={<IconDownload size={17}/>} onClick={()=>exportChanges(changes!,password).then(()=>notifications.show({message:'Encrypted backup downloaded'})).catch(()=>notifications.show({color:'red',message:'Backup failed'}))}>Export encrypted changes</Button>
  <Button component="label" variant="light" color="gray" leftSection={<IconUpload size={17}/>} loading={importing}>Import encrypted backup<input hidden type="file" accept=".json,application/json" onChange={async e=>{const f=e.target.files?.[0];if(!f)return;setImporting(true);try{const next=await importChanges(f,password);await updateChanges(next);notifications.show({message:'Backup imported'})}catch{notifications.show({color:'red',message:'Could not decrypt this backup with your passphrase'})}finally{setImporting(false);e.target.value=''}}}/></Button>
  <div><h3>AWS milestone roadmap</h3><p>Import the updated five-phase Markdown plan. It stays encrypted in this browser; your goals and revision backlog are preserved. Existing milestone overrides for matching IDs are reset to the imported checklist.</p></div>
- <Button component="label" variant="light" color="gray" leftSection={<IconUpload size={17}/>} loading={importingRoadmap}>Import AWS roadmap (.md)<input hidden type="file" accept=".md,text/markdown,text/plain" onChange={async e=>{const f=e.target.files?.[0];if(!f)return;setImportingRoadmap(true);try{const phases=parseMilestoneMarkdown(await f.text());await updateChanges({...changes!,phases,milestones:{}});notifications.show({message:`Imported ${phases.length} phases and ${phases.reduce((n,p)=>n+p.milestones.length,0)} milestones`});setSettings(false)}catch(ex){notifications.show({color:'red',message:ex instanceof Error?ex.message:'Could not import roadmap'})}finally{setImportingRoadmap(false);e.target.value=''}}}/></Button>
+ <Button component="label" variant="light" color="gray" leftSection={<IconUpload size={17}/>} loading={importingRoadmap}>Import AWS roadmap (.md)<input hidden type="file" accept=".md,text/markdown,text/plain" onChange={async e=>{const f=e.target.files?.[0];if(!f)return;setImportingRoadmap(true);try{const phases=parseMilestoneMarkdown(await f.text());await updateChanges({...changes!,phases,milestones:{},roadmapRevision:undefined});notifications.show({message:`Imported ${phases.length} phases and ${phases.reduce((n,p)=>n+p.milestones.length,0)} milestones`});setSettings(false)}catch(ex){notifications.show({color:'red',message:ex instanceof Error?ex.message:'Could not import roadmap'})}finally{setImportingRoadmap(false);e.target.value=''}}}/></Button>
  <div className="settings-note"><IconShieldLock size={18}/> Your locally saved milestone and revision changes are encrypted in this browser. Your passphrase is not sent to a server.</div>
  <Button variant="light" color="red" leftSection={<IconLock size={17}/>} onClick={lock}>Lock now</Button></div></Modal>
  </div>;
