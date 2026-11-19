@@ -7,7 +7,7 @@ A colorful, static, encrypted engineering-progress dashboard built with **React,
 - **Overview:** pastel bento tiles, contribution skyline, LeetCode goal orbit, AWS mission rail, revision queue.
 - **Competitive coding:** LeetCode solved/difficulty/topic breakdown, calendar mosaic, latest submissions; Codeforces rating history, distinct solved problems, rating distribution.
 - **GitHub:** public repositories, activity, merged PRs, optional authenticated contribution calendar.
-- **AWS Billing:** five current development phases, imported from updated Markdown in Settings; editable checkboxes saved encrypted locally.
+- **AWS Billing:** eight completed foundations plus five development phases (35 exact milestones, 10 initially complete), loaded from `docs/billing-pipeline-milestones.md` during encrypted dashboard collection; editable checkboxes saved encrypted locally.
 - **Reports:** daily history, seven-snapshot comparisons, export Markdown progress report.
 - **Workspace:** strong-passphrase decrypt screen, 15-minute idle lock, light/dark mode, keyboard navigation via `Ctrl + K`, encrypted progress-settings import/export.
 
@@ -108,7 +108,7 @@ public/data/
 
 ## Known limitations
 
-- Milestone completion and imported roadmap are encrypted in the browser but do not sync across devices without manual encrypted backup transfer. To replace the old seven-phase roadmap, open Settings & backup → Import AWS roadmap (.md), choose the updated milestone Markdown, and export an encrypted backup if you need to transfer it. The import resets checkbox overrides for matching milestone IDs but preserves goals and revision backlog. The encrypted repository seed remains unchanged until regenerated separately.
+- Milestone completion and imported roadmap are encrypted in the browser but do not sync across devices without manual encrypted backup transfer. The updated roadmap is bundled automatically on each GitHub Actions deployment: no manual Markdown import or password reset is required. Old milestone checkbox overrides are migrated away once to prevent stale values shadowing the new source, while goals and revision backlog remain unchanged. The raw source document is versioned in `docs/billing-pipeline-milestones.md`; daily GitHub Actions runs read it and encrypt the dashboard payload using the existing repository secret.
 - The retired Resume Hub's encrypted IndexedDB database (`devpulse-resume-v1`) is deleted automatically when the updated site next loads in each browser profile. The deletion does not touch milestone overrides, other local settings, or files stored elsewhere. If an old DevPulse tab blocks deletion, close other tabs and reload. Browsers that never open the updated site will retain their old local data until manually cleared.
 - This is static-site encryption, not enterprise authentication or zero-trust identity management.
 - The current GitHub data model deliberately counts activity and PRs, **not GitHub code submissions as a ranked contest platform does**.
